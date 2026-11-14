@@ -215,3 +215,12 @@ def test_one_feed_message_is_one_market_revision():
     st.apply_market_update([{"symbol": "INFY", "ltp": 100.0, "prevClose": 99.0, "ts": at(10, 29, 50)}],
                            [{"symbol": "INFY", "oi": 10, "ts": at(10, 29, 50)}])
     assert st.market_revision == 1  # identical data: no new observation
+
+
+def test_static_assets_revalidate_so_deploys_show_immediately(demo):
+    c, _ = demo
+    r = c.get("/static/chart.js")
+    assert r.status_code == 200 and r.headers["cache-control"] == "no-cache"
+    assert "etag" in r.headers
+    again = c.get("/static/chart.js", headers={"If-None-Match": r.headers["etag"]})
+    assert again.status_code == 304
